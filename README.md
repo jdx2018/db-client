@@ -1,6 +1,6 @@
 # db-client
 
-[![npm version](https://img.shields.io/npm/v/axios.svg?style=flat-square)](https://www.npmjs.org/package/db-client)
+[![npm version](https://img.shields.io/npm/v/db-client.svg?style=flat-square)](https://www.npmjs.org/package/db-client)
 
 A client for access db in browser. Based on socket.io.
 
