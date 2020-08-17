@@ -1,0 +1,1 @@
+A client for access db in browser. Based on socket.io.
