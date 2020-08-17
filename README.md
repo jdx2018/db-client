@@ -30,7 +30,7 @@ Using bower:
 Using yarn:
 
 ```bash
-$ yarn add axios
+$ yarn add db-client
 ```
 
 ## API
