@@ -2,8 +2,6 @@ import io from "socket.io-client";
 import crypto from "crypto";
 import cache from "./cache";
 import { GetQueryString } from "./utils";
-const end_point = window.g.end_point;
-const URL = GetQueryString("redirect_uri", window.g.url);
 
 const options = {};
 options.transports = ["polling"];
@@ -71,10 +69,8 @@ Date.prototype.Format = function (format) {
   }
   return format;
 };
+
 const sign = {
-  key: window.g.sign.key,
-  iv: window.g.sign.iv,
-  salt: window.g.sign.salt,
   aes_encrypt: function aes_encrypt(key, iv, rawData) {
     key = Buffer.alloc(16, key, "utf-8");
     iv = Buffer.alloc(16, iv, "utf-8");
@@ -90,11 +86,15 @@ const sign = {
   },
   encrypt: function encrypt(rawData) {
     let encryptData = this.aes_encrypt(
-      sign.key,
-      sign.iv,
+      dbClient.getConfig("sign_params").key,
+      dbClient.getConfig("sign_params").iv,
       JSON.stringify(rawData)
     );
-    return this.md5(encryptData + sign.salt + new Date().Format("YYYY-MM-dd"));
+    return this.md5(
+      encryptData +
+        dbClient.getConfig("sign_params").salt +
+        new Date().Format("YYYY-MM-dd")
+    );
   },
 };
 
@@ -106,13 +106,39 @@ const operateEnum = {
   insertMany: "insertMany",
 };
 var dbClient = {
+  args: {},
+  verifyOpts: function verifyOpts(option) {
+    const requiredOpts = ["end_point", "sign_params"];
+    requiredOpts.forEach((requiredKey) => {
+      if (!option.hasOwnProperty(requiredKey)) {
+        throw new Error(`Must contain Required params ${requiredKey}`);
+      }
+    });
+    return true;
+  },
+  setConfig: function setConfig(option) {
+    if (this.verifyOpts(option)) {
+      this.args = option;
+    }
+  },
+  getConfig: function getConfig(configName) {
+    if (this.args[configName]) {
+      return this.args[configName];
+    }
+    throw new Error("You should call setConfig before use dbClient!");
+  },
   getSocket: async function getSocket() {
     return new Promise((resolve, reject) => {
-      let socket = io(end_point, options);
+      let socket = io(this.getConfig("end_point"), options);
       socket.on("connect", () => {
         resolve(socket);
       });
-      socket.on("disconnect", () => {});
+      socket.on("disconnect", () => {
+        // console.log("disconnect");
+      });
+      // socket.on("connect_error", (err) => {
+      //   reject(err);
+      // });
     });
   },
   login: async function login(tenantId, userId, pwd) {
@@ -149,7 +175,10 @@ var dbClient = {
       let socket = null;
       try {
         socket = await this.getSocket();
-        let rawData = { code: code, url: URL };
+        let rawData = {
+          code: code,
+          url: GetQueryString("redirect_uri", this.getConfig("url")),
+        };
         let signature = sign.encrypt(rawData);
         let data = { signature: signature, body: rawData };
         socket.emit(channel.login_sso.request, JSON.stringify(data));
@@ -178,12 +207,16 @@ var dbClient = {
       let rawData = { id: socket.id };
       try {
         let signature = sign.encrypt(rawData);
+        if (!cache.access_token_get() || !cache.userId_get()) {
+          throw new Error("You should login first！");
+        }
         let data = {
           signature: signature,
           access_token: cache.access_token_get(),
           userId: cache.userId_get(),
           body: rawData,
         };
+
         socket.emit(channel.getConnection.request, JSON.stringify(data));
         socket.on(channel.getConnection.response, (res) => {
           res = JSON.parse(res);
