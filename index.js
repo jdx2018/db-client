@@ -40,6 +40,8 @@ const channel = {
     request: "api/sso/login/request",
     response: "api/sso/login/response",
   },
+  sendSms: { request: "sms/send/request", response: "sms/send/response" },
+  sendEmail: { request: "email/send/request", response: "email/send/response" },
 };
 Date.prototype.Format = function (format) {
   var date = {
@@ -408,6 +410,20 @@ var dbClient = {
     } catch (err) {
       console.log(err);
     }
+  },
+  SendSms: async function (mobile, content) {
+    return await this.executeChannel(null, channel.sendSms, {
+      mobile: mobile,
+      content: content,
+    });
+  },
+  SendEmail: async function (toAddr, ccAddress, title, content) {
+    return await this.executeChannel(null, channel.sendEmail, {
+      toAddr: toAddr,
+      ccAddress: ccAddress,
+      title: title,
+      content: content,
+    });
   },
 };
 export default dbClient;
