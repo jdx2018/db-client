@@ -258,16 +258,6 @@ var dbClient = {
         con.emit(channelObj.request, JSON.stringify(data));
         con.on(channelObj.response, (res) => {
           res = JSON.parse(res);
-          console.log(res);
-          if (
-            res.code === -20 ||
-            res.code === -21 ||
-            res.code === -22 ||
-            res.code === -23 ||
-            res.code === -24
-          ) {
-            window.location.href = "/sign-in";
-          }
           if (needRelease) {
             con.close();
           }
