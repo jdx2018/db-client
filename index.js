@@ -54,18 +54,13 @@ Date.prototype.Format = function (format) {
     "S+": this.getMilliseconds(),
   };
   if (/(y+)/i.test(format)) {
-    format = format.replace(
-      RegExp.$1,
-      (this.getFullYear() + "").substr(4 - RegExp.$1.length)
-    );
+    format = format.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
   }
   for (var k in date) {
     if (new RegExp("(" + k + ")").test(format)) {
       format = format.replace(
         RegExp.$1,
-        RegExp.$1.length === 1
-          ? date[k]
-          : ("00" + date[k]).substr(("" + date[k]).length)
+        RegExp.$1.length === 1 ? date[k] : ("00" + date[k]).substr(("" + date[k]).length)
       );
     }
   }
@@ -87,16 +82,14 @@ const sign = {
     return cryptor.update(str).digest("hex");
   },
   encrypt: function encrypt(rawData) {
+    console.log(JSON.stringify(rawData));
     let encryptData = this.aes_encrypt(
       dbClient.getConfig("sign_params").key,
       dbClient.getConfig("sign_params").iv,
       JSON.stringify(rawData)
     );
-    return this.md5(
-      encryptData +
-        dbClient.getConfig("sign_params").salt +
-        new Date().Format("YYYY-MM-dd")
-    );
+
+    return this.md5(encryptData + dbClient.getConfig("sign_params").salt + new Date().Format("YYYY-MM-dd"));
   },
 };
 
@@ -149,9 +142,11 @@ var dbClient = {
       try {
         socket = await this.getSocket();
         let rawData = { tenantId, userId, pwd };
+
         let signature = sign.encrypt(rawData);
 
         let data = { signature: signature, body: rawData };
+
         socket.emit(channel.login_pc.request, JSON.stringify(data));
         socket.on(channel.login_pc.response, (res) => {
           res = JSON.parse(res);
@@ -295,85 +290,32 @@ var dbClient = {
   executeSqlWithCon: async function executeSqlWithCon(con, sql, params) {
     return this.executeChannel(con, channel.executeSqlWithCon, { sql, params });
   },
-  QueryWithCon: async function QueryWithCon(
-    con,
-    tableName,
-    query,
-    fields,
-    pageNum,
-    pageSize
-  ) {
-    return this.executeObjWithCon(
-      con,
-      operateEnum.query,
-      tableName,
-      query,
-      fields,
-      null,
-      pageNum,
-      pageSize
-    );
+  QueryWithCon: async function QueryWithCon(con, tableName, query, fields, pageNum, pageSize) {
+    return this.executeObjWithCon(con, operateEnum.query, tableName, query, fields, null, pageNum, pageSize);
   },
   Query: async function Query(tableName, query, fields, pageNum, pageSize) {
     return this.QueryWithCon(null, tableName, query, fields, pageNum, pageSize);
   },
-  UpdateWithCon: async function UpdateWithCon(
-    con,
-    tableName,
-    query,
-    dataContent
-  ) {
-    return this.executeObjWithCon(
-      con,
-      operateEnum.update,
-      tableName,
-      query,
-      null,
-      dataContent
-    );
+  UpdateWithCon: async function UpdateWithCon(con, tableName, query, dataContent) {
+    return this.executeObjWithCon(con, operateEnum.update, tableName, query, null, dataContent);
   },
   Update: async function Update(tableName, query, dataContent) {
     return this.UpdateWithCon(null, tableName, query, dataContent);
   },
   InsertWithCon: async function InsertWithCon(con, tableName, dataContent) {
-    return this.executeObjWithCon(
-      con,
-      operateEnum.insert,
-      tableName,
-      null,
-      null,
-      dataContent
-    );
+    return this.executeObjWithCon(con, operateEnum.insert, tableName, null, null, dataContent);
   },
   Insert: async function Insert(tableName, dataContent) {
     return this.InsertWithCon(null, tableName, dataContent);
   },
-  InsertManyWithCon: async function InsertManyWithCon(
-    con,
-    tableName,
-    dataContent
-  ) {
-    return this.executeObjWithCon(
-      con,
-      operateEnum.insertMany,
-      tableName,
-      null,
-      null,
-      dataContent
-    );
+  InsertManyWithCon: async function InsertManyWithCon(con, tableName, dataContent) {
+    return this.executeObjWithCon(con, operateEnum.insertMany, tableName, null, null, dataContent);
   },
   InsertMany: async function InsertMany(tableName, dataContent) {
     return this.InsertManyWithCon(null, tableName, dataContent);
   },
   DeleteWithCon: async function DeleteWithCon(con, tableName, query) {
-    return this.executeObjWithCon(
-      con,
-      operateEnum.delete,
-      tableName,
-      query,
-      null,
-      null
-    );
+    return this.executeObjWithCon(con, operateEnum.delete, tableName, query, null, null);
   },
   Delete: async function Delete(tableName, query) {
     return this.DeleteWithCon(null, tableName, query);
