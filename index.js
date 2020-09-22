@@ -82,7 +82,13 @@ const sign = {
     return cryptor.update(str).digest("hex");
   },
   encrypt: function encrypt(rawData) {
-    console.log(JSON.stringify(rawData));
+    console.log(
+      "%c%s",
+      "color: red; background: yellow; font-size: 24px;",
+      "JSON.stringify(rawData): ",
+      JSON.stringify(rawData)
+    );
+    // console.log(JSON.stringify(rawData));
     let encryptData = this.aes_encrypt(
       dbClient.getConfig("sign_params").key,
       dbClient.getConfig("sign_params").iv,
